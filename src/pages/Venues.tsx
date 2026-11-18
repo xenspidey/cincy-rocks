@@ -18,6 +18,11 @@ import { ErrorNote, Loading, ShowRow } from '../components/ShowRow';
 // by itself, so point it at the copy Vite publishes with the site.
 setWorkerUrl(maplibreWorkerUrl);
 
+// Credit line OpenFreeMap asks for, shown in the map's corner.
+const MAP_CREDIT = '<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> '
+  + '<a href="https://www.openmaptiles.org/" target="_blank" rel="noreferrer">&copy; OpenMapTiles</a> '
+  + 'Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>';
+
 function pin(n: number, active = false) {
   return L.divIcon({
     className: '',
@@ -33,19 +38,19 @@ function VenueMap({ venues, focus, height = 320 }: { venues: Venue[]; focus?: st
   useEffect(() => {
     if (!el.current) return;
     const f = venues.find((v) => v.id === focus);
-    const map = L.map(el.current, { scrollWheelZoom: false }).setView(f ? [f.lat, f.lng] : [FESTIVAL.mapCenter.lat, FESTIVAL.mapCenter.lng], f ? 17 : FESTIVAL.mapZoom);
+    const map = L.map(el.current, { scrollWheelZoom: false, maxZoom: 19 }).setView(f ? [f.lat, f.lng] : [FESTIVAL.mapCenter.lat, FESTIVAL.mapCenter.lng], f ? 17 : FESTIVAL.mapZoom);
     // OpenFreeMap vector tiles, drawn by MapLibre underneath Leaflet's pins.
-    // The credit line (OpenFreeMap, OpenMapTiles, OpenStreetMap) comes from the style itself.
-    L.maplibreGL({ style: FESTIVAL.mapStyle }).addTo(map);
+    L.maplibreGL({ style: FESTIVAL.mapStyle, attributionControl: { customAttribution: MAP_CREDIT } }).addTo(map);
     venues.forEach((v, i) => {
       L.marker([v.lat, v.lng], { icon: pin(i + 1, v.id === focus), title: v.name })
         .addTo(map)
         .bindTooltip(v.name)
         .on('click', () => nav(`/venues/${v.id}`));
     });
-    if (!f && venues.length > 1) map.fitBounds(L.latLngBounds(venues.map((v) => [v.lat, v.lng])), { padding: [30, 30] });
+    if (!f && venues.length > 1) map.fitBounds(L.latLngBounds(venues.map((v) => [v.lat, v.lng])), { padding: [30, 30], animate: false });
     addLocateButton(map);
-    return () => { map.remove(); };
+    // Stop any zoom animation first: Leaflet errors if one finishes after the map is gone.
+    return () => { map.stop(); map.remove(); };
   }, [venues, focus, nav]);
   return <div ref={el} className="map" style={{ height }} role="region" aria-label="Venue map" />;
 }
