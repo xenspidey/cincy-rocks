@@ -66,10 +66,16 @@ export function nowIso(): string {
   return o && /^\d{4}-\d\d-\d\dT\d\d:\d\d/.test(o) ? o.slice(0, 16) : localIso(new Date());
 }
 
-function prevDay(day: string) {
+function shiftDay(day: string, by: number) {
   const d = new Date(day + 'T12:00:00');
-  d.setDate(d.getDate() - 1);
+  d.setDate(d.getDate() + by);
   return d.toISOString().slice(0, 10);
+}
+const prevDay = (day: string) => shiftDay(day, -1);
+
+/** The date-time for a clock time on festival day `day`: times before 6 AM fall on the next calendar date. */
+export function festivalTime(day: string, hhmm: string): string {
+  return `${Number(hhmm.slice(0, 2)) < DAY_ROLLOVER_HOUR ? shiftDay(day, 1) : day}T${hhmm}`;
 }
 
 /** The festival day a moment belongs to (before 6 AM counts as the previous day). */
@@ -115,5 +121,8 @@ export function socialUrl(kind: keyof typeof SOCIAL_PREFIX | 'website', value: s
   if (/^https?:\/\//i.test(v)) return v;
   if (kind === 'website') return 'https://' + v.replace(/^\/+/, '');
   const handle = v.replace(/^\/+/, '');
-  return SOCIAL_PREFIX[kind] + (kind === 'tiktok' && !handle.startsWith('@') ? '@' + handle : handle);
+  // TikTok and YouTube addresses use @handle; Instagram, X and Facebook use the bare name.
+  if (kind === 'tiktok') return SOCIAL_PREFIX[kind] + (handle.startsWith('@') ? handle : '@' + handle);
+  if (kind === 'youtube') return SOCIAL_PREFIX[kind] + handle;
+  return SOCIAL_PREFIX[kind] + handle.replace(/^@/, '');
 }

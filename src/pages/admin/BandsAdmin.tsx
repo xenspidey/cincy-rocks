@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { store, notifyChange } from '../../data/store';
 import { useLoad } from '../../data/hooks';
 import type { Band, BandStatus } from '../../data/types';
 import { newId } from '../../data/util';
+import { socialUrl } from '../../data/format';
 import { BandArt, Icon } from '../../components/Art';
 import { ErrorNote, Loading } from '../../components/ShowRow';
 
@@ -38,10 +39,12 @@ export function Approvals() {
           <p className="bio">{b.bio || <em>No bio given.</em>}</p>
           <dl className="facts">
             <dt>Contact</dt><dd>{b.contactName || '—'} {b.contactEmail && <a href={`mailto:${b.contactEmail}`}>{b.contactEmail}</a>}</dd>
-            {b.website && <><dt>Website</dt><dd><a href={b.website} target="_blank" rel="noreferrer">{b.website}</a></dd></>}
-            {b.instagram && <><dt>Instagram</dt><dd><a href={b.instagram} target="_blank" rel="noreferrer">{b.instagram}</a></dd></>}
-            {b.spotify && <><dt>Spotify</dt><dd><a href={b.spotify} target="_blank" rel="noreferrer">{b.spotify}</a></dd></>}
-            {b.youtube && <><dt>YouTube</dt><dd><a href={b.youtube} target="_blank" rel="noreferrer">{b.youtube}</a></dd></>}
+            {/* Bands type handles or bare addresses; socialUrl turns them into full https links. */}
+            {([['website', 'Website'], ['instagram', 'Instagram'], ['facebook', 'Facebook'], ['tiktok', 'TikTok'], ['x', 'X'], ['spotify', 'Spotify'], ['youtube', 'YouTube']] as const)
+              .filter(([k]) => b[k])
+              .map(([k, label]) => (
+                <Fragment key={k}><dt>{label}</dt><dd><a href={socialUrl(k, b[k])} target="_blank" rel="noreferrer">{b[k]}</a></dd></Fragment>
+              ))}
           </dl>
           <label className="field"><span>Note (optional, kept with the decision)</span>
             <input value={notes[b.id] ?? ''} onChange={(e) => setNotes({ ...notes, [b.id]: e.target.value })} />
