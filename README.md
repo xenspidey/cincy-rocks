@@ -239,6 +239,8 @@ Change the app id (`appId` in `capacitor.config.json`, currently
 ## Making it yours
 
 - Name, dates, town and map: `src/config.ts`
+- Map look: `mapStyle` in `src/config.ts`. The map uses free [OpenFreeMap](https://openfreemap.org)
+  vector tiles (no key or account); swap `liberty` for `bright` or `positron` for another style.
 - Colours: the variables at the top of `src/styles/app.css`
 - Logo: the `Logo` drawing in `src/components/Art.tsx` and `public/icon.svg`
 - Sample content: `src/data/seed.ts` (demo mode only)

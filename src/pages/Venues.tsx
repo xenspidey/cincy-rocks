@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { setWorkerUrl } from 'maplibre-gl';
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
+import '@maplibre/maplibre-gl-leaflet';
 import { FESTIVAL } from '../config';
 import { store } from '../data/store';
 import { useLoad } from '../data/hooks';
@@ -9,6 +13,10 @@ import { dayLabel, displayName, showDayOf } from '../data/format';
 import type { Venue } from '../data/types';
 import { Icon } from '../components/Art';
 import { ErrorNote, Loading, ShowRow } from '../components/ShowRow';
+
+// MapLibre draws the map in a background worker. Once bundled it can't find that file
+// by itself, so point it at the copy Vite publishes with the site.
+setWorkerUrl(maplibreWorkerUrl);
 
 function pin(n: number, active = false) {
   return L.divIcon({
@@ -26,10 +34,9 @@ function VenueMap({ venues, focus, height = 320 }: { venues: Venue[]; focus?: st
     if (!el.current) return;
     const f = venues.find((v) => v.id === focus);
     const map = L.map(el.current, { scrollWheelZoom: false }).setView(f ? [f.lat, f.lng] : [FESTIVAL.mapCenter.lat, FESTIVAL.mapCenter.lng], f ? 17 : FESTIVAL.mapZoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map);
+    // OpenFreeMap vector tiles, drawn by MapLibre underneath Leaflet's pins.
+    // The credit line (OpenFreeMap, OpenMapTiles, OpenStreetMap) comes from the style itself.
+    L.maplibreGL({ style: FESTIVAL.mapStyle }).addTo(map);
     venues.forEach((v, i) => {
       L.marker([v.lat, v.lng], { icon: pin(i + 1, v.id === focus), title: v.name })
         .addTo(map)
