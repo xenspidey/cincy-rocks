@@ -19,13 +19,39 @@ On top of the guide it has a small admin area:
 
 | Folder | What it is |
 | --- | --- |
-| `src/` | The app itself (React + TypeScript, built with Vite) |
-| `src/config.ts` | Festival name, dates, town, map position, contact email — edit this first |
+| `src/` | The app itself (React + TypeScript, built with Vite): every screen, shared by web, Android and iPhone |
+| `src/config.ts` | App name, dates, city, map position, contact email. Edit this first |
 | `src/data/seed.ts` | Sample bands, venues, shows and news used in demo mode |
-| `supabase/schema.sql` | The shared database (tables, security rules, invite checks) |
-| `android/` | Android Studio project (Capacitor) |
-| `ios/` | Xcode project (Capacitor) |
 | `public/` | App icon and web manifest |
+| `android/` | Android Studio project: a thin native shell that shows the built app |
+| `ios/` | Xcode project: the same thin shell for iPhone |
+| `supabase/schema.sql` | The shared database (tables, security rules, invite checks) |
+| `scripts/` | Build helpers |
+| `.github/workflows/` | Publishes the website and builds both phone apps on GitHub |
+
+### Why one folder for web, Android and iPhone
+
+This is the standard layout for a Capacitor app: the screens are written once in `src/`,
+and `android/` and `ios/` are small native projects that load the built website
+(`npx cap sync` copies it in). Splitting web, Android and iPhone into separate repositories
+or top-level folders would mean three copies of the same screens to keep in step.
+
+When the project grows past one app, the usual next step is a **monorepo**: one repository
+with an `apps/` folder per product and a `packages/` folder for shared code, tied together
+with npm workspaces. For example:
+
+```
+apps/
+  mobile-and-web/   this app (src, android, ios)
+  admin/            a separate admin website, if it ever outgrows the in-app admin area
+  watch/            a native watch or TV app (Swift/Kotlin), which can't reuse the web screens
+packages/
+  data/             shared types and the Supabase data layer
+supabase/           database schema and migrations
+```
+
+Move to that layout only when a second app actually needs its own code. Until then, the
+current layout is simpler and is what Capacitor's tools expect.
 
 ## Run and build
 
