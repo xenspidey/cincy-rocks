@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#00223f" />
+    <meta name="description" content="Cincy Rocks: bands, show schedule and venue map for live music in Cincinnati, Ohio." />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Cincy Rocks</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Launch splash: shown while the app loads, then faded out (see src/main.tsx).
+         Sunset gradient, string lights and a city skyline, drawn in code. -->
+    <div id="splash" aria-hidden="true">
+      <style>
+        #splash { position: fixed; inset: 0; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+          background: linear-gradient(180deg, #badaf3 0%, #7ec3d8 18%, #e9b949 48%, #f08a24 64%, #e4572e 78%, #00223f 78.2%, #00223f 100%);
+          font-family: 'Open Sans', system-ui, sans-serif; transition: opacity .45s ease; }
+        #splash.gone { opacity: 0; pointer-events: none; }
+        #splash .lights { position: absolute; top: 9%; left: -5%; width: 110%; height: 60px; }
+        #splash .name { color: #fff; font-weight: 800; font-size: 2.1rem; letter-spacing: .04em; text-transform: uppercase; text-align: center;
+          line-height: 1.05; text-shadow: 0 3px 14px rgba(0,34,63,.45); margin-top: -12vh; }
+        #splash .ed { color: #00223f; background: #fff; border-radius: 6px; padding: 2px 12px; font-weight: 700; letter-spacing: .25em; margin-top: 10px; font-size: .85rem; }
+        #splash .city { position: absolute; left: 0; right: 0; bottom: 21.8%; height: 70px; color: #00223f; }
+      </style>
+      <svg class="lights" viewBox="0 0 400 60" preserveAspectRatio="none">
+        <path d="M0 8 Q100 52 200 14 T400 10" fill="none" stroke="#00223f" stroke-width="1.2" opacity=".5" />
+        <g fill="#fff6c8"><circle cx="20" cy="17" r="3"/><circle cx="55" cy="29" r="3"/><circle cx="90" cy="34" r="3"/><circle cx="125" cy="31" r="3"/><circle cx="160" cy="23" r="3"/><circle cx="200" cy="14" r="3"/><circle cx="240" cy="13" r="3"/><circle cx="280" cy="19" r="3"/><circle cx="320" cy="20" r="3"/><circle cx="360" cy="15" r="3"/><circle cx="392" cy="10" r="3"/></g>
+      </svg>
+      <div class="name">Cincy<br />Rocks</div>
+      <div class="ed">CINCINNATI</div>
+      <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="none"><path fill="currentColor" d="M0 120V78l40-10 46 10v-6h30v-8l22-12 22 12v20h26V58h52v26h16V70l14-14 14 14v14h30V64h18V52h8v12h22v20h20V66l50-14 50 14v18h18V74c20-20 60-20 80 0v10h26V60l40-12 40 12v24h20V54h10l6-18 6 18h10v30h30V70h44v14h22V62l24-10 24 10v22h18V48h12V34l6-10 6 10v14h12v36h30V72h40v12h30V66l30-8 30 8H1200v54z"/></svg>
+    </div>
+    <script>
+      // Show the launch splash once per visit, not on every page load.
+      try { if (sessionStorage.getItem('splash-seen')) document.getElementById('splash').remove(); else sessionStorage.setItem('splash-seen', '1'); } catch (e) {}
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

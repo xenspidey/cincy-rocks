@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cincy Rocks</string>
+    <string name="title_activity_main">Cincy Rocks</string>
+    <string name="package_name">com.cincyrocks.app</string>
+    <string name="custom_url_scheme">com.cincyrocks.app</string>
+</resources>

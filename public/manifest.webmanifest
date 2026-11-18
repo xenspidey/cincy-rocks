@@ -1,0 +1,9 @@
+{
+  "name": "Cincy Rocks",
+  "short_name": "Cincy Rocks",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#00223f",
+  "theme_color": "#00223f",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

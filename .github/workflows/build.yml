@@ -1,0 +1,18 @@
+name: Check website build
+
+# Builds the website on pull requests so mistakes show up before they're merged.
+# Publishing happens in pages.yml.
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
