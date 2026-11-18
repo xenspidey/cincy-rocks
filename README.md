@@ -86,12 +86,15 @@ free [Supabase](https://supabase.com) project:
    website on your domain" below).
 4. In Supabase **Authentication → Providers**, keep Email enabled.
 5. Rebuild (`npm run build`) and redeploy.
+
+   When you update the app later, paste `supabase/schema.sql` into the SQL Editor and run
+   it again: it only adds what's new and keeps your data.
 6. Open **Admin** on the site: the first account created there becomes the admin.
    To add another admin later, create their user in Supabase **Authentication →
    Users**, then add a row with their user id and email to the `admins` table.
 
-Security is enforced by the database: only admins can see pending bands, edit
-content or create invites, and a band application is only accepted through the
+Security is enforced by the database: only admins can see pending bands, bands' contact
+details and review notes (kept in a separate `band_contacts` table), edit content or create invites, and a band application is only accepted through the
 `apply_with_invite` function when its invite code is valid, unexpired and not used up.
 
 ## Where everything lives
