@@ -273,6 +273,7 @@ a.show-row:hover, a.band-row:hover { background: #f4f9fd; }
 .note { background: #eef6fc; border-radius: 10px; padding: 10px 12px; margin: 8px 0; color: var(--navy); font-size: 0.92rem; }
 .note-error { background: #fdecea; color: #8c1d18; }
 .note-ok { background: #e7f7ee; color: #14532d; }
+.store-note { margin: 0; border-radius: 0; text-align: center; background: #fff4d6; color: #5c3d00; }
 .muted { color: var(--muted); }
 .muted.on-blue { color: #e1f2ff; margin: 0; font-weight: 600; }
 .small { font-size: 0.83rem; }
@@ -394,3 +395,22 @@ a.show-row:hover, a.band-row:hover { background: #f4f9fd; }
 .age-badge.all { background: #e6f5ff; color: var(--blue-2); }
 .check { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; font-weight: 600; color: var(--navy); }
 .check input { width: 18px; height: 18px; accent-color: var(--blue); }
+
+/* Help page: each step is a screenshot (in a phone outline) beside its explanation. */
+.help { max-width: 860px; }
+.help-toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.help-toc a { text-decoration: none; }
+.help .section-label { margin-top: 18px; scroll-margin-top: 80px; }
+.help-step { display: grid; gap: 16px; scroll-margin-top: 80px; }
+.help-step h3 { margin: 0 0 6px; font-size: 1.15rem; }
+.help-text p, .help-text ul { margin: 0 0 10px; line-height: 1.55; }
+.help-text ul { padding-left: 1.2em; }
+.help-text li { margin-bottom: 4px; }
+.help-text code { background: #eef4fa; border-radius: 4px; padding: 1px 5px; font-size: 0.9em; }
+.help-shot { margin: 0 auto; width: min(260px, 72vw); }
+.help-shot img { display: block; width: 100%; height: auto; border-radius: 22px; border: 6px solid var(--navy);
+  box-shadow: 0 10px 24px rgba(0, 34, 63, 0.25); background: var(--navy); }
+@media (min-width: 700px) {
+  .help-step:has(.help-shot) { grid-template-columns: 240px 1fr; align-items: start; }
+  .help-shot { width: 240px; order: -1; }
+}

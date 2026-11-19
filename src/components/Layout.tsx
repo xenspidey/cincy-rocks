@@ -1,7 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Icon, Logo, Skyline } from './Art';
 import { store } from '../data/store';
+import { needsStoreVersion, onStoreVersionNeeded } from '../native/liveUpdates';
 
 const tabs = [
   { to: '/', label: 'Home', icon: 'house-door' },
@@ -14,6 +16,7 @@ const tabs = [
 const more = [
   { to: '/info', label: 'News & Info', icon: 'megaphone' },
   { to: '/join', label: 'Band Sign-Up', icon: 'person-plus' },
+  { to: '/help', label: 'Help', icon: 'question-circle' },
   { to: '/admin', label: 'Admin', icon: 'shield-lock' },
 ];
 
@@ -22,7 +25,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const loc = useLocation();
   const nav = useNavigate();
   useEffect(() => { setMenuOpen(false); window.scrollTo(0, 0); }, [loc.pathname]);
-  const isTop = tabs.some((t) => t.to === loc.pathname) || loc.pathname === '/info' || loc.pathname === '/join' || loc.pathname === '/admin';
+  const isTop = tabs.some((t) => t.to === loc.pathname) || more.some((t) => t.to === loc.pathname);
+  const storeVersion = useSyncExternalStore(onStoreVersionNeeded, needsStoreVersion);
 
   return (
     <div className="shell">
@@ -57,6 +61,12 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         )}
       </header>
+
+      {storeVersion && (
+        <p className="note store-note" role="status">
+          <Icon name="arrow-up-circle" /> A new version of the app is available in the {Capacitor.getPlatform() === 'ios' ? 'App Store' : 'Google Play store'}. Please install it to keep everything working.
+        </p>
+      )}
 
       <main className="content">{children}</main>
 

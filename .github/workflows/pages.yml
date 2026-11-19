@@ -5,6 +5,9 @@ name: Publish website
 #   CUSTOM_DOMAIN      your domain, e.g. cincyrocks.com (leave unset to use <account>.github.io/<repo>)
 #   SUPABASE_URL       your Supabase project URL      } leave both unset for demo mode
 #   SUPABASE_ANON_KEY  your Supabase "anon" public key }
+#   LIVE_UPDATES       set to off to pause live updates to the phone apps (e.g. during store review)
+#   MIN_NATIVE_VERSION store versions older than this (e.g. 1.1) are asked to install the new
+#                      store version; raise it only after a release that changed native code
 on:
   push:
     branches: [main]
@@ -34,17 +37,42 @@ jobs:
           VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
           CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+          LIVE_UPDATES: ${{ vars.LIVE_UPDATES }}
+          MIN_NATIVE_VERSION: ${{ vars.MIN_NATIVE_VERSION }}
           REPO_NAME: ${{ github.event.repository.name }}
           OWNER: ${{ github.repository_owner }}
         run: |
           if [ -n "$CUSTOM_DOMAIN" ]; then
-            export VITE_BASE=/ VITE_SITE_URL="https://$CUSTOM_DOMAIN"
+            SITE_BASE=/ SITE_URL="https://$CUSTOM_DOMAIN"
           else
-            export VITE_BASE="/$REPO_NAME/" VITE_SITE_URL="https://$OWNER.github.io/$REPO_NAME"
+            SITE_BASE="/$REPO_NAME/" SITE_URL="https://$OWNER.github.io/$REPO_NAME"
           fi
-          npm run build
+          export VITE_SITE_URL="$SITE_URL"
+          # The same version name as the phone-app builds of this commit (see apps.yml).
+          export VITE_APP_BUILD="$(node -p "require('./package.json').version")-${GITHUB_SHA::7}"
+
+          # 1. The copy the phone apps download as a live update. Inside the apps it is
+          #    always served from the root, whatever address the website uses.
+          VITE_BASE=/ npm run build
+          (cd dist && zip -qr "$RUNNER_TEMP/app.zip" .)
+          rm -rf dist
+
+          # 2. The website itself.
+          VITE_BASE="$SITE_BASE" npm run build
           touch dist/.nojekyll
           if [ -n "$CUSTOM_DOMAIN" ]; then echo "$CUSTOM_DOMAIN" > dist/CNAME; fi
+
+          # 3. Publish the app copy next to the website, with updates/latest.json naming it.
+          mkdir -p dist/updates
+          ZIP="app-$VITE_APP_BUILD.zip"
+          cp "$RUNNER_TEMP/app.zip" "dist/updates/$ZIP"
+          ZIP="$ZIP" SITE_URL="$SITE_URL" CHECKSUM="$(sha256sum "$RUNNER_TEMP/app.zip" | cut -d' ' -f1)" node -e '
+            const e = process.env;
+            const m = { minNativeVersion: e.MIN_NATIVE_VERSION || "1.0" };
+            if ((e.LIVE_UPDATES || "").toLowerCase() !== "off") Object.assign(m, {
+              version: e.VITE_APP_BUILD, url: `${e.SITE_URL}/updates/${e.ZIP}`, checksum: e.CHECKSUM });
+            require("fs").writeFileSync("dist/updates/latest.json", JSON.stringify(m, null, 2) + "\n");
+            console.log(m);'
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

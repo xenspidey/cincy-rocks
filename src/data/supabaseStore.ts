@@ -110,10 +110,20 @@ export class SupabaseStore implements DataStore {
     return !(check(await this.sb.rpc('has_admins')) as boolean);
   }
   async setupAdmin(email: string, password: string) {
-    const { error } = await this.sb.auth.signUp({ email, password });
-    if (error) throw new Error(error.message);
+    // Sign in first, so pressing "Create account" again after confirming the email (or after
+    // an earlier try that stopped half way) finishes the job instead of failing on sign-up.
     const signed = await this.sb.auth.signInWithPassword({ email, password });
-    if (signed.error) throw new Error(signed.error.message + ' (if email confirmation is on, confirm the email first, then sign in)');
+    if (signed.error) {
+      if (/not confirmed/i.test(signed.error.message)) {
+        throw new Error('Confirm your email first: open the link Supabase sent you, then come back and press Create account again.');
+      }
+      const up = await this.sb.auth.signUp({ email, password });
+      if (up.error) throw new Error(up.error.message);
+      // With "Confirm email" on, Supabase signs nobody in until the link is opened.
+      if (!up.data.session) {
+        throw new Error(`Check ${email} for a confirmation email. Open its link, then come back here and press Create account again with the same email and password.`);
+      }
+    }
     check(await this.sb.rpc('claim_first_admin'));
   }
   async signIn(email: string, password: string): Promise<AdminSession> {

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 const dist = 'dist';
 const index = join(dist, 'index.html');
 if (!existsSync(index)) throw new Error('dist/index.html is missing; run vite build first');
-for (const route of ['bands', 'schedule', 'venues', 'favorites', 'info', 'join', 'admin']) {
+for (const route of ['bands', 'schedule', 'venues', 'favorites', 'info', 'join', 'help', 'admin']) {
   mkdirSync(join(dist, route), { recursive: true });
   copyFileSync(index, join(dist, route, 'index.html'));
 }

@@ -14,6 +14,8 @@ import { BandDetail, BandList } from './pages/Bands';
 import { Favorites, Schedule } from './pages/Schedule';
 import Info from './pages/Info';
 import Join from './pages/Join';
+import Help from './pages/Help';
+import { startLiveUpdates } from './native/liveUpdates';
 
 // The map and the admin area load only when opened, to keep the first screen fast.
 const Venues = lazy(() => import('./pages/Venues').then((m) => ({ default: m.Venues })));
@@ -39,6 +41,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/info" element={<Info />} />
             <Route path="/join" element={<Join />} />
+            <Route path="/help" element={<Help />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -47,6 +50,9 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+// Phone apps: pick up new versions published with the website (see src/native/liveUpdates.ts).
+startLiveUpdates();
 
 // Fade out the launch splash from index.html once the app has drawn.
 const splash = document.getElementById('splash');

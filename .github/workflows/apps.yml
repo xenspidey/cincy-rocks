@@ -29,7 +29,9 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: npm ci
-      - run: npm run build
+      # Same version name as the website's live-update copy of this commit (see pages.yml),
+      # so a fresh install doesn't download what it already has.
+      - run: VITE_APP_BUILD="$(node -p "require('./package.json').version")-${GITHUB_SHA::7}" npm run build
       - run: npx cap sync android
       - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug --console=plain
       - uses: actions/upload-artifact@v4
@@ -46,7 +48,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      # Same version name as the website's live-update copy of this commit (see pages.yml),
+      # so a fresh install doesn't download what it already has.
+      - run: VITE_APP_BUILD="$(node -p "require('./package.json').version")-${GITHUB_SHA::7}" npm run build
       - run: npx cap sync ios
       # Simulator build: needs no Apple account. For a real iPhone or the App Store,
       # open ios/App/App.xcodeproj in Xcode, pick your team under Signing, then Archive.
@@ -77,7 +81,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      # Same version name as the website's live-update copy of this commit (see pages.yml),
+      # so a fresh install doesn't download what it already has.
+      - run: VITE_APP_BUILD="$(node -p "require('./package.json').version")-${GITHUB_SHA::7}" npm run build
       - run: npx cap sync ios
       - name: Install signing certificate and profile
         env:
