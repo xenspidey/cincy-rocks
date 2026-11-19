@@ -4,7 +4,7 @@ import { store, notifyChange } from '../../data/store';
 import { useLoad } from '../../data/hooks';
 import type { NewsItem, Performance, Venue } from '../../data/types';
 import { newId } from '../../data/util';
-import { dayLabel, festivalDays, timeLabel } from '../../data/format';
+import { dayLabel, festivalDays, festivalTime, minutesInto, showDayOf, timeLabel } from '../../data/format';
 import { Icon } from '../../components/Art';
 import { ErrorNote, Loading } from '../../components/ShowRow';
 
@@ -29,14 +29,15 @@ export function ScheduleAdmin() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.bandId || !form.venueId) return;
-    const p: Performance = { id: form.id || newId('p'), bandId: form.bandId, venueId: form.venueId, start: `${day}T${form.start}`, end: `${day}T${form.end}` };
-    if (p.end <= p.start) { alert('The end time must be after the start time.'); return; }
+    const p: Performance = { id: form.id || newId('p'), bandId: form.bandId, venueId: form.venueId, start: festivalTime(day, form.start), end: festivalTime(day, form.end) };
+    if (p.end <= p.start) { alert('The end time must be after the start time. Shows before 6 AM count as the night before.'); return; }
     if (await run(() => store.savePerformance(p))) setForm({ ...form, id: '' });
   };
 
   if (error) return <ErrorNote error={error} />;
   if (!data) return <Loading />;
-  const list = data.perfs.filter((p) => p.start.startsWith(day));
+  // Same day rule as the public schedule: a 1 AM set belongs to the night before.
+  const list = data.perfs.filter((p) => showDayOf(p.start) === day).sort((a, b) => minutesInto(day, a.start) - minutesInto(day, b.start));
 
   return (
     <>

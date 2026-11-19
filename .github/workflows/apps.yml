@@ -8,11 +8,12 @@ on:
   workflow_dispatch:
 
 # The phone apps use the same live database and website address as the website
-# (repository variables, see pages.yml). Unset means demo mode.
+# (repository variables, see pages.yml). Unset means demo mode. Without CUSTOM_DOMAIN,
+# invite QR codes point at the GitHub Pages address, as the website does.
 env:
   VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
   VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
-  VITE_SITE_URL: ${{ vars.CUSTOM_DOMAIN && format('https://{0}', vars.CUSTOM_DOMAIN) || '' }}
+  VITE_SITE_URL: ${{ vars.CUSTOM_DOMAIN && format('https://{0}', vars.CUSTOM_DOMAIN) || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
 
 jobs:
   android:

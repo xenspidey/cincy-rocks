@@ -9,6 +9,13 @@ import { newId, newInviteCode, normalizeCode } from './util';
 
 type Row = Record<string, unknown>;
 
+// Contact details, invite code and review note live in band_contacts, which only admins
+// can read. Admin queries embed it; for everyone else it comes back empty.
+const contactsOf = (r: Row): Row => {
+  const c = r.band_contacts as Row | Row[] | null | undefined;
+  return (Array.isArray(c) ? c[0] : c) ?? {};
+};
+
 const bandFromRow = (r: Row): Band => ({
   id: r.id as string,
   name: r.name as string,
@@ -22,21 +29,26 @@ const bandFromRow = (r: Row): Band => ({
   facebook: (r.facebook as string) ?? undefined,
   tiktok: (r.tiktok as string) ?? undefined,
   x: (r.x as string) ?? undefined,
-  contactName: (r.contact_name as string) ?? undefined,
-  contactEmail: (r.contact_email as string) ?? undefined,
+  contactName: (contactsOf(r).contact_name as string) ?? undefined,
+  contactEmail: (contactsOf(r).contact_email as string) ?? undefined,
   imageUrl: (r.image_url as string) ?? undefined,
   status: r.status as Band['status'],
-  inviteCode: (r.invite_code as string) ?? undefined,
+  inviteCode: (contactsOf(r).invite_code as string) ?? undefined,
   createdAt: r.created_at as string,
   reviewedAt: (r.reviewed_at as string) ?? undefined,
-  reviewNote: (r.review_note as string) ?? undefined,
+  reviewNote: (contactsOf(r).review_note as string) ?? undefined,
 });
 
+/** The public part of a band (the bands table). */
 const bandToRow = (b: Band | BandApplication): Row => ({
   name: b.name, genre: b.genre, hometown: b.hometown, bio: b.bio,
   website: b.website || null, instagram: b.instagram || null, spotify: b.spotify || null, youtube: b.youtube || null,
-  facebook: b.facebook || null, tiktok: b.tiktok || null, x: b.x || null,
-  contact_name: b.contactName || null, contact_email: b.contactEmail || null, image_url: b.imageUrl || null,
+  facebook: b.facebook || null, tiktok: b.tiktok || null, x: b.x || null, image_url: b.imageUrl || null,
+});
+
+/** The private part (the band_contacts table). */
+const contactToRow = (b: Band | BandApplication): Row => ({
+  contact_name: b.contactName || null, contact_email: b.contactEmail || null,
 });
 
 const inviteFromRow = (r: Row): Invite => ({
@@ -63,9 +75,10 @@ export class SupabaseStore implements DataStore {
   }
 
   async listBands(opts?: { includeAll?: boolean }) {
-    let q = this.sb.from('bands').select('*').order('name');
+    const cols: string = opts?.includeAll ? '*, band_contacts(*)' : '*';
+    let q = this.sb.from('bands').select(cols).order('name');
     if (!opts?.includeAll) q = q.eq('status', 'approved');
-    return (check(await q) as Row[]).map(bandFromRow);
+    return (check(await q) as unknown as Row[]).map(bandFromRow);
   }
   async getBand(id: string) {
     const rows = check(await this.sb.from('bands').select('*').eq('id', id).limit(1)) as Row[];
@@ -89,7 +102,7 @@ export class SupabaseStore implements DataStore {
     return { ok: true, invite: { code: normalizeCode(code), note: '', createdAt: '', maxUses: 0, uses: 0, revoked: false } };
   }
   async applyWithInvite(code: string, app: BandApplication) {
-    const row = check(await this.sb.rpc('apply_with_invite', { p_code: normalizeCode(code), p_band: bandToRow(app) })) as Row;
+    const row = check(await this.sb.rpc('apply_with_invite', { p_code: normalizeCode(code), p_band: { ...bandToRow(app), ...contactToRow(app) } })) as Row;
     return bandFromRow(row);
   }
 
@@ -126,10 +139,12 @@ export class SupabaseStore implements DataStore {
   }
 
   async reviewBand(id: string, status: Band['status'], note?: string) {
-    check(await this.sb.from('bands').update({ status, review_note: note ?? null, reviewed_at: new Date().toISOString() }).eq('id', id));
+    check(await this.sb.from('bands').update({ status, reviewed_at: new Date().toISOString() }).eq('id', id));
+    check(await this.sb.from('band_contacts').upsert({ band_id: id, review_note: note ?? null }));
   }
   async saveBand(b: Band) {
     check(await this.sb.from('bands').upsert({ id: b.id, status: b.status, ...bandToRow(b) }));
+    check(await this.sb.from('band_contacts').upsert({ band_id: b.id, ...contactToRow(b) }));
   }
   async deleteBand(id: string) { check(await this.sb.from('bands').delete().eq('id', id)); }
 

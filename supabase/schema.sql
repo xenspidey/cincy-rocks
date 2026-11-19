@@ -13,12 +13,18 @@ create table if not exists bands (
   genre text default '',
   hometown text default '',
   bio text default '',
-  website text, instagram text, spotify text, youtube text,
-  contact_name text, contact_email text, image_url text,
+  website text, instagram text, spotify text, youtube text, image_url text,
   status text not null default 'pending' check (status in ('pending','approved','rejected')),
-  invite_code text,
   created_at timestamptz not null default now(),
-  reviewed_at timestamptz,
+  reviewed_at timestamptz
+);
+
+-- Private details for each band, kept apart from the public lineup: only admins can read them.
+create table if not exists band_contacts (
+  band_id text primary key references bands(id) on delete cascade,
+  contact_name text,
+  contact_email text,
+  invite_code text,
   review_note text
 );
 
@@ -62,6 +68,20 @@ alter table bands add column if not exists facebook text;
 alter table bands add column if not exists tiktok text;
 alter table bands add column if not exists x text;
 alter table venues add column if not exists over_21 boolean not null default false;
+
+-- Older databases kept contact details, invite code and review note in the public bands
+-- table, where anyone could read them. Move them to band_contacts (runs once).
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'bands' and column_name = 'contact_email') then
+    insert into band_contacts (band_id, contact_name, contact_email, invite_code, review_note)
+      select id, contact_name, contact_email, invite_code, review_note from bands
+      on conflict (band_id) do nothing;
+    alter table bands drop column contact_name, drop column contact_email,
+                      drop column invite_code, drop column review_note;
+  end if;
+end $$;
 
 -- Helpers ------------------------------------------------------------------
 
@@ -113,10 +133,12 @@ begin
   if problem is not null then raise exception '%', problem; end if;
   if coalesce(trim(p_band->>'name'), '') = '' then raise exception 'Band name is required'; end if;
   update invites set uses = uses + 1 where code = i.code;
-  insert into bands(name, genre, hometown, bio, website, instagram, spotify, youtube, facebook, tiktok, x, contact_name, contact_email, image_url, status, invite_code)
+  insert into bands(name, genre, hometown, bio, website, instagram, spotify, youtube, facebook, tiktok, x, image_url, status)
   values (p_band->>'name', p_band->>'genre', p_band->>'hometown', p_band->>'bio', p_band->>'website', p_band->>'instagram',
-          p_band->>'spotify', p_band->>'youtube', p_band->>'facebook', p_band->>'tiktok', p_band->>'x', p_band->>'contact_name', p_band->>'contact_email', p_band->>'image_url', 'pending', i.code)
+          p_band->>'spotify', p_band->>'youtube', p_band->>'facebook', p_band->>'tiktok', p_band->>'x', p_band->>'image_url', 'pending')
   returning * into b;
+  insert into band_contacts(band_id, contact_name, contact_email, invite_code)
+  values (b.id, p_band->>'contact_name', p_band->>'contact_email', i.code);
   return b;
 end $$;
 
@@ -124,6 +146,7 @@ end $$;
 
 alter table admins enable row level security;
 alter table bands enable row level security;
+alter table band_contacts enable row level security;
 alter table venues enable row level security;
 alter table performances enable row level security;
 alter table news enable row level security;
@@ -136,6 +159,9 @@ drop policy if exists "public approved bands" on bands;
 create policy "public approved bands" on bands for select using (status = 'approved' or is_admin());
 drop policy if exists "admin bands" on bands;
 create policy "admin bands" on bands for all using (is_admin()) with check (is_admin());
+
+drop policy if exists "admin band contacts" on band_contacts;
+create policy "admin band contacts" on band_contacts for all using (is_admin()) with check (is_admin());
 
 drop policy if exists "public venues" on venues;
 create policy "public venues" on venues for select using (true);

@@ -14,6 +14,8 @@ export const FESTIVAL = {
   /** Where the map opens. */
   mapCenter: { lat: 39.1075, lng: -84.5140 }, // Over-the-Rhine and downtown Cincinnati
   mapZoom: 15,
+  /** Map look, from OpenFreeMap (free, no key). Other styles: .../styles/bright, .../styles/positron. */
+  mapStyle: 'https://tiles.openfreemap.org/styles/liberty',
   contactEmail: 'hello@example.com',
   /** Public web address of your site, e.g. https://cincyrocks.com (used in invite QR codes
    *  made inside the phone apps). Set by VITE_SITE_URL when building; when empty, the

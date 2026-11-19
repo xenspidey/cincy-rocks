@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { setWorkerUrl } from 'maplibre-gl';
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
+import '@maplibre/maplibre-gl-leaflet';
 import { FESTIVAL } from '../config';
 import { store } from '../data/store';
 import { useLoad } from '../data/hooks';
@@ -9,6 +13,15 @@ import { dayLabel, displayName, showDayOf } from '../data/format';
 import type { Venue } from '../data/types';
 import { Icon } from '../components/Art';
 import { ErrorNote, Loading, ShowRow } from '../components/ShowRow';
+
+// MapLibre draws the map in a background worker. Once bundled it can't find that file
+// by itself, so point it at the copy Vite publishes with the site.
+setWorkerUrl(maplibreWorkerUrl);
+
+// Credit line OpenFreeMap asks for, shown in the map's corner.
+const MAP_CREDIT = '<a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> '
+  + '<a href="https://www.openmaptiles.org/" target="_blank" rel="noreferrer">&copy; OpenMapTiles</a> '
+  + 'Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>';
 
 function pin(n: number, active = false) {
   return L.divIcon({
@@ -25,20 +38,19 @@ function VenueMap({ venues, focus, height = 320 }: { venues: Venue[]; focus?: st
   useEffect(() => {
     if (!el.current) return;
     const f = venues.find((v) => v.id === focus);
-    const map = L.map(el.current, { scrollWheelZoom: false }).setView(f ? [f.lat, f.lng] : [FESTIVAL.mapCenter.lat, FESTIVAL.mapCenter.lng], f ? 17 : FESTIVAL.mapZoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
-    }).addTo(map);
+    const map = L.map(el.current, { scrollWheelZoom: false, maxZoom: 19 }).setView(f ? [f.lat, f.lng] : [FESTIVAL.mapCenter.lat, FESTIVAL.mapCenter.lng], f ? 17 : FESTIVAL.mapZoom);
+    // OpenFreeMap vector tiles, drawn by MapLibre underneath Leaflet's pins.
+    L.maplibreGL({ style: FESTIVAL.mapStyle, attributionControl: { customAttribution: MAP_CREDIT } }).addTo(map);
     venues.forEach((v, i) => {
       L.marker([v.lat, v.lng], { icon: pin(i + 1, v.id === focus), title: v.name })
         .addTo(map)
         .bindTooltip(v.name)
         .on('click', () => nav(`/venues/${v.id}`));
     });
-    if (!f && venues.length > 1) map.fitBounds(L.latLngBounds(venues.map((v) => [v.lat, v.lng])), { padding: [30, 30] });
+    if (!f && venues.length > 1) map.fitBounds(L.latLngBounds(venues.map((v) => [v.lat, v.lng])), { padding: [30, 30], animate: false });
     addLocateButton(map);
-    return () => { map.remove(); };
+    // Stop any zoom animation first: Leaflet errors if one finishes after the map is gone.
+    return () => { map.stop(); map.remove(); };
   }, [venues, focus, nav]);
   return <div ref={el} className="map" style={{ height }} role="region" aria-label="Venue map" />;
 }
