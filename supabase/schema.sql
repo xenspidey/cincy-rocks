@@ -182,4 +182,12 @@ create policy "admin news" on news for all using (is_admin()) with check (is_adm
 drop policy if exists "admin invites" on invites;
 create policy "admin invites" on invites for all using (is_admin()) with check (is_admin());
 
+-- Table access for the website and apps. Newer Supabase projects don't open new tables to the
+-- Data API by default, so it's granted here; the row rules above still decide what each person
+-- can see or change (visitors only ever read; only admins can write).
+grant usage on schema public to anon, authenticated;
+grant select on bands, venues, performances, news to anon, authenticated;
+grant select on admins to authenticated;
+grant select, insert, update, delete on bands, band_contacts, venues, performances, news, invites to authenticated;
+
 grant execute on function is_admin, has_admins, claim_first_admin, check_invite, apply_with_invite to anon, authenticated;
