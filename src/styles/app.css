@@ -273,6 +273,7 @@ a.show-row:hover, a.band-row:hover { background: #f4f9fd; }
 .note { background: #eef6fc; border-radius: 10px; padding: 10px 12px; margin: 8px 0; color: var(--navy); font-size: 0.92rem; }
 .note-error { background: #fdecea; color: #8c1d18; }
 .note-ok { background: #e7f7ee; color: #14532d; }
+.store-note { margin: 0; border-radius: 0; text-align: center; background: #fff4d6; color: #5c3d00; }
 .muted { color: var(--muted); }
 .muted.on-blue { color: #e1f2ff; margin: 0; font-weight: 600; }
 .small { font-size: 0.83rem; }

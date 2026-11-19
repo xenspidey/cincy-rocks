@@ -2,6 +2,16 @@
   "appId": "com.cincyrocks.app",
   "appName": "Cincy Rocks",
   "webDir": "dist",
-  "android": { "backgroundColor": "#badaf3" },
-  "ios": { "backgroundColor": "#badaf3", "contentInset": "never" }
+  "android": {
+    "backgroundColor": "#badaf3"
+  },
+  "ios": {
+    "backgroundColor": "#badaf3",
+    "contentInset": "never"
+  },
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false
+    }
+  }
 }
