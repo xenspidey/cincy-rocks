@@ -153,6 +153,27 @@ From Android Studio or Xcode you can run on a device and produce the store build
 Set `siteUrl` in `src/config.ts` to your public website address so invite QR codes
 made inside the phone apps point at the website.
 
+### Updating the apps without the app stores (live updates)
+
+The phone apps update their screens from your website, so most changes never need a store release:
+
+- **Content** (bands, schedule, venues, news) comes from the database and shows straight away.
+- **App changes** (new screens, fixes, design): every publish of the website (a push to `main`) also
+  publishes a zipped copy of the app and `updates/latest.json`. The apps check it when they open or
+  come back to the screen, download the new copy in the background and use it the next time they're
+  reopened. A copy that fails to start is rolled back automatically.
+
+Repository variables (*Settings > Secrets and variables > Actions > Variables*):
+
+- `LIVE_UPDATES` = `off` pauses live updates. Set it while Apple or Google is reviewing a new store
+  version, so reviewers see exactly what you submitted, and remove it (then republish) afterwards.
+- `MIN_NATIVE_VERSION` (default `1.0`): store versions older than this stop taking live updates and ask
+  people to install the new store version. Raise it only after a store release that changed native
+  parts (new plugins or permissions, a Capacitor upgrade, the app icon or name), to the new version
+  number (`versionName` in `android/app/build.gradle`, *Version* in Xcode).
+
+Native changes like those still need a store release; everything in `src/` and `public/` does not.
+
 ### Building the installable apps
 
 - **Android:** `npm run android:apk` builds `android/app/build/outputs/apk/debug/app-debug.apk`.
@@ -247,6 +268,9 @@ Change the app id (`appId` in `capacitor.config.json`, currently
 - Colours: the variables at the top of `src/styles/app.css`
 - Logo: the `Logo` drawing in `src/components/Art.tsx` and `public/icon.svg`
 - Sample content: `src/data/seed.ts` (demo mode only)
+- Help page: `src/pages/Help.tsx`. Its screenshots in `public/help/` are taken from the demo data with
+  `npm run help:screenshots` (needs Playwright: `npm i -D playwright && npx playwright install chromium`);
+  run it again after changing how the app looks.
 
 ## Publishing this repository to GitHub
 
